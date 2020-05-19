@@ -6,9 +6,10 @@
 #include <WiFiClientSecureBearSSL.h>
 #include <LiquidCrystal.h>
 
+//Time of seconds to update data again
 #define timeSeconds 5
 
-//LCD pin to Arduino
+//LCD pin to NodeMCU
 const int pin_RS = D0; 
 const int pin_EN = D1; 
 const int pin_d4 = D2; 
@@ -16,6 +17,7 @@ const int pin_d5 = D3;
 const int pin_d6 = D4; 
 const int pin_d7 = D5; 
 
+//FingerPrint for SSL communication, else you will get error
 const uint8_t fingerprint[20] = {0x08,0x3B,0x71,0x72,0x02,0x43,0x6E,0xCA,0xED,0x42,0x86,0x93,0xBA,0x7E,0xDF,0x81,0xC4,0xBC,0x62,0x30};
 
 ESP8266WiFiMulti WiFiMulti;
@@ -31,7 +33,7 @@ void setup() {
   Serial.println();
   Serial.println();
   WiFi.mode(WIFI_STA);
-  WiFiMulti.addAP("SSID", "PASSWORD");
+  WiFiMulti.addAP("SSID", "PASSWORD");  //Change SSID,PASSWORD with your params
   
   lcd.begin(16, 2);
   lcd.setCursor(0,0);
@@ -49,7 +51,9 @@ void loop() {
     std::unique_ptr<BearSSL::WiFiClientSecure>client(new BearSSL::WiFiClientSecure);
     client->setFingerprint(fingerprint);
     HTTPClient https;
-    if (https.begin(*client, "https://coronavirus-19-api.herokuapp.com/countries/morocco")) {  // HTTPS
+    
+    // API to get data for Morocco, you can change Morocco to your country's name
+    if (https.begin(*client, "https://coronavirus-19-api.herokuapp.com/countries/morocco")) {  
       int httpCode = https.GET();
       if (httpCode > 0) {
         if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
@@ -60,7 +64,7 @@ void loop() {
 
           DynamicJsonDocument doc(200);
           deserializeJson(doc, payload);
-          //JsonArray fields = doc["country"];
+
           String country = doc["country"];
           String cases = doc["cases"];
           String todayCases = doc["todayCases"];
